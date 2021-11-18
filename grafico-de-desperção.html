@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafico de Desperção</title>
+</head>
+<style>
+    body{
+        text-align: center;
+    }
+    #tooltip {
+    width: 180px;
+    height: 80px;
+    background-color: rgba(0, 183, 255, 0.200);
+    position: relative;
+  }
+  circle{
+      fill: teal;
+  }
+  #legend{
+    position: relative;
+  }
+</style>
+<body>
+    <h1 id='title'>Os 35 Melhores ciclistas entre 1994 a 2016</h1>
+    <div id='grafico'></div>
+    <footer id='legend'>Outro gráfico <a href="https://codepen.io/freeCodeCamp/full/bgpXyK">Pertecente ao Free Codo Camp</a>.</footer>
+</body>
+<script>
+    d3.json('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/cyclist-data.json', function(dados) {
+    var largura = window.innerWidth, minutos, minsec = dados.map((valor) => {return valor.Time.split(':')})
+
+    var svg = d3.select(document.getElementById('grafico'))
+    .append('svg')
+    .attr('height', 460)
+    .attr('width', 750)
+
+    dados.sort((a, b) => {
+        return a.Year - b.Year
+    })
+
+    var tempo = dados.map((valor) => {
+        return valor.Seconds * 1000
+    }),
+
+    tempostr = dados.map((valor) => {
+        return valor.Time
+    }),
+
+    anos = dados.map((valor) => {
+        return valor.Year
+    })
+    
+    minutos = d3.timeFormat('%M:%S')
+
+    var yScale = d3.scaleLinear()
+    .domain([d3.max(tempo), d3.min(tempo)])
+    .range([435, 0])
+
+    var yAxis = d3.axisLeft(yScale)
+    .tickFormat(minutos)
+
+    var xScale = d3.scaleLinear()
+    .domain([anos[0], anos[anos.length - 1]])
+    .range([0, 700])
+
+    var xAxis = d3.axisBottom(xScale)
+    .tickFormat(d3.format('d'))
+
+    svg.append('g')
+    .attr('transform', 'translate(40, 5)')
+    .call(yAxis)
+    .attr('id', 'y-axis')
+
+    svg.append('g')
+    .attr('transform', 'translate(40, 440)')
+    .call(xAxis)
+    .attr('id', 'x-axis')
+
+    svg.selectAll('circle')
+    .data(dados)
+    .enter()
+    .append('circle')
+    .attr('class', 'dot')
+    .attr('data-xvalue', (d, i) => anos[i])
+    .attr('data-yvalue', (d, i) => new Date(1970, 0, 1, 0, minsec[i][0], minsec[i][1]).toISOString())
+    .attr('r', 5)
+    .attr('cy', (d, i) => yScale(d.Seconds * 1000) + 5)
+    .attr('cx', (d, i) => xScale(anos[i]) + 40)
+    .on('mouseover', function (d, i) {
+      d3.select(this)
+        .style('fill', 'black')
+
+      d3.select('div')
+        .append('div')
+        .attr('id', 'tooltip')
+        .attr('data-year', anos[i])
+        .style('bottom', 500 - (yScale(d.Seconds * 1000) + 5) + 'px')
+        .style('left', ((largura - 750) / 2) + xScale(anos[i]) + 45 + 'px')
+        .html(`Nome: ${d.Name} <br> Nacionalidade: ${d.Nationality} <br> Tempo: ${tempostr[i]} <br> Ano: ${anos[i]}`)
+
+      d3.select('footer')
+      .style('bottom', '80px')
+    })
+    .on('mouseout', function (d, i) {
+      d3.select(this)
+        .style('fill', 'teal')
+
+      var elemento = document.getElementById('tooltip')
+      elemento.parentNode.removeChild(elemento)
+      
+      d3.select('footer')
+      .style('bottom', '0px')
+    })
+    })
+</script>
+</html>
